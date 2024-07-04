@@ -1,45 +1,64 @@
 import streamlit as st
 import pandas as pd
-import joblib
-from sklearn.preprocessing import StandardScaler
+import numpy as np
+import pickle
 
-# Load the scaler and the model
-scaler = joblib.load("scaler.pkl")
-model = joblib.load("model.pkl")
+# Function to load pickled objects (model and scaler)
+def load_pickled_objects(model_file, scaler_file):
+    with open(model_file, 'rb') as f:
+        model = pickle.load(f)
+    with open(scaler_file, 'rb') as f:
+        scaler = pickle.load(f)
+    return model, scaler
 
-# Define the prediction function
-def predict(input_data):
-    scaled_data = scaler.transform(input_data)
-    prediction = model.predict(scaled_data)
-    return prediction
+# Load your model and scaler
+model_file = 'model.pkl'  # Replace with your actual file path
+scaler_file = 'scaler.pkl'  # Replace with your actual file path
+model, scaler = load_pickled_objects(model_file, scaler_file)
 
 # Streamlit app
-st.title("ML Prediction App")
+def main():
+    st.title('Your Classification Model Deployment')
 
-# Input form
-st.header("Enter input data for prediction:")
+    # Collect user input
+    ssc_p = st.slider('Secondary Education Percentage', 0.0, 100.0, 50.0)
+    hsc_p = st.slider('Higher Secondary Education Percentage', 0.0, 100.0, 50.0)
+    degree_p = st.slider('Degree Percentage', 0.0, 100.0, 50.0)
+    mba_p = st.slider('MBA Percentage', 0.0, 100.0, 50.0)
+    etest_p = st.slider('Employability Test Percentage', 0.0, 100.0, 50.0)
 
-ssc_p = st.number_input("SSC Percentage")
-hsc_p = st.number_input("HSC Percentage")
-degree_p = st.number_input("Degree Percentage")
-mba_p = st.number_input("MBA Percentage")
-etest_p = st.number_input("Etest Percentage")
+    gender_M = st.checkbox('Male Gender')
+    hsc_s_Commerce = st.checkbox('Higher Secondary in Commerce')
+    hsc_s_Science = st.checkbox('Higher Secondary in Science')
+    degree_t_Others = st.checkbox('Degree in Others')
+    degree_t_SciTech = st.checkbox('Degree in Science & Tech')
+    workex_Yes = st.checkbox('Work Experience')
+    specialisation_MktHR = st.checkbox('Specialisation in Marketing & HR')
 
-# Binary columns
-gender_M = st.selectbox("Gender (Male=1, Female=0)", [0, 1])
-hsc_s_Commerce = st.selectbox("HSC Stream Commerce (Yes=1, No=0)", [0, 1])
-hsc_s_Science = st.selectbox("HSC Stream Science (Yes=1, No=0)", [0, 1])
-degree_t_Others = st.selectbox("Degree Type Others (Yes=1, No=0)", [0, 1])
-degree_t_Sci_Tech = st.selectbox("Degree Type Sci&Tech (Yes=1, No=0)", [0, 1])
-workex_Yes = st.selectbox("Work Experience (Yes=1, No=0)", [0, 1])
-specialisation_Mkt_HR = st.selectbox("Specialisation Mkt&HR (Yes=1, No=0)", [0, 1])
+    # Prepare user input for prediction
+    user_input = pd.DataFrame({
+        'ssc_p': [ssc_p],
+        'hsc_p': [hsc_p],
+        'degree_p': [degree_p],
+        'mba_p': [mba_p],
+        'etest_p': [etest_p],
+        'gender_M': [gender_M],
+        'hsc_s_Commerce': [hsc_s_Commerce],
+        'hsc_s_Science': [hsc_s_Science],
+        'degree_t_Others': [degree_t_Others],
+        'degree_t_Sci&Tech': [degree_t_SciTech],
+        'workex_Yes': [workex_Yes],
+        'specialisation_Mkt&HR': [specialisation_MktHR]
+    })
 
-input_data = pd.DataFrame([[ssc_p, hsc_p, degree_p, mba_p, etest_p, gender_M, hsc_s_Commerce, hsc_s_Science,
-                           degree_t_Others, degree_t_Sci_Tech, workex_Yes, specialisation_Mkt_HR]],
-                         columns=["ssc_p", "hsc_p", "degree_p", "mba_p", "etest_p", "gender_M", "hsc_s_Commerce",
-                                  "hsc_s_Science", "degree_t_Others", "degree_t_Sci&Tech", "workex_Yes", "specialisation_Mkt&HR"])
+    # Scale the input using the pickled scaler
+    scaled_input = scaler.transform(user_input)
 
-# Predict button
-if st.button("Predict"):
-    prediction = predict(input_data)
-    st.write("Prediction:", prediction)
+    # Make predictions
+    prediction = model.predict(scaled_input)
+
+    # Display prediction
+    st.write(f"Prediction: {prediction}")
+
+if __name__ == '__main__':
+    main()
