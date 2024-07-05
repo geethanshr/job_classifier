@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+from sklearn.preprocessing import MinMaxScaler
 
 # Function to load pickled objects (model and scaler)
 def load_pickled_objects(model_file, scaler_file):
@@ -51,14 +52,16 @@ def main():
         'specialisation_Mkt&HR': [specialisation_MktHR]
     })
 
-    # Scale the input using the pickled scaler
-    scaled_input = scaler.transform(user_input)
+    # Scale the specific input columns
+    columns_to_scale = ['ssc_p', 'hsc_p', 'degree_p', 'mba_p', 'etest_p']
+    user_input_scaled = user_input.copy()
+    user_input_scaled[columns_to_scale] = scaler.transform(user_input[columns_to_scale])
 
     # Make predictions
-    prediction = model.predict(scaled_input)
+    prediction = model.predict(user_input_scaled)
 
     # Display prediction
-    st.write(f"Prediction: {prediction}")
+    st.write(f"Prediction: {prediction[0]}")
 
 if __name__ == '__main__':
     main()
